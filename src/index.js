@@ -56,7 +56,17 @@ const formatCode = command => {
   // $FlowFixMe dynamic require is ok
   const {reshape} = require(`./commands/${command}`);
   const {applyReshape} = require('./transform/applyReshape');
-  const output = applyReshape(source, cursorIndex, reshape);
+  let output;
+  try {
+    output = applyReshape(source, cursorIndex, reshape);
+  } catch (error) {
+    atom.notifications.addError('atom-reshape-js', {detail: error.message});
+    const position = syntaxErrorPosition(error);
+    if (position) {
+      editor.setCursorBufferPosition(position);
+    }
+    return;
+  }
   if (output == null) {
     atom.notifications.addInfo('atom-reshape-js', {
       detail:
@@ -71,4 +81,9 @@ const formatCode = command => {
   // editor.setCursorBufferPosition([cursor.row + 1, cursor.column]);
 };
 
-const fromLocToAtom = loc => ({row: loc.line - 1, column: loc.column - 1});
+function syntaxErrorPosition(error: Error): ?[number, number] {
+  const {line, column} = error.loc || {};
+  return Number.isInteger(line) && Number.isInteger(column)
+    ? [line - 1, column]
+    : null;
+}

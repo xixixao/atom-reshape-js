@@ -48,14 +48,7 @@ export function parse(text: string, opts: ?Object = null): Ast {
     }
   }
   if (lastError != null) {
-    const {loc, message} = lastError;
-    throw {
-      message: message.replace(/ \(.*\)/, ''),
-      loc: {
-        line: loc.line,
-        column: loc.column + 1,
-      },
-    };
+    throw lastError;
   }
   delete (ast: any).tokens;
   return ast;
